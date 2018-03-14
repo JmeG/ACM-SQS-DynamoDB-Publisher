@@ -1,0 +1,115 @@
+service: ACM-DynamoDB-Publisher
+
+plugins:
+  - serverless-iam-roles-per-function
+  - serverless-python-requirements
+  - serverless-pseudo-parameters
+  - serverless-sam
+
+custom:
+  stage: "${opt:stage, env:SLS_STAGE, 'dev'}"
+  profile: "${opt:aws-profile, env:AWS_PROFILE, env:AWS_DEFAULT_PROFILE, 'default'}"
+  log_level: "${env:LOG_LEVEL, 'INFO'}"
+  dynamodb_table_name: 'ApplicationCostMonitoring'
+
+  cf-parameters:
+    aws_adm_stack_name: "${env:AWS_ADM_STACK_NAME, 'ApplicationCostMonitoring-${self:custom.stage}'}"
+
+provider:
+  name: aws
+  profile: ${self:custom.profile}
+  stage: ${self:custom.stage}
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "dynamodb:PutItem"
+      Resource:
+          - Fn::GetAtt:
+            - BillingItemDynamoDBTable
+            - Arn
+
+functions:
+  DynamoDBPublisher:
+    handler: handlers/dynamodb-billing-item-writer.handler
+    description: "Write billing data to a DynamoDB table"
+    runtime: python3.6
+    memorySize: 128
+    # High timeout to give room for retries
+    timeout: 300
+    environment:
+      LOG_LEVEL: ${self:custom.log_level}
+      DYNAMODB_TABLE: '${self:custom.dynamodb_table_name}'
+
+resources:
+  Parameters:
+    AwsAdmStackName:
+      Type: String
+      Description: 'AWS Application Monitoring CloudFormation stack name'
+      Default: '${self:custom.cf-parameters.aws_adm_stack_name}'
+
+  Resources:
+    SnsSubscriptionDynamoDBPublisher:
+      Type: 'AWS::SNS::Subscription'
+      Properties:
+        TopicArn:
+          Fn::ImportValue:
+            Fn::Join:
+              - '-'
+              - - Ref: AwsAdmStackName
+                - 'BillingRecordsSnsTopicArn'
+        Protocol: lambda
+        Endpoint:
+          Fn::GetAtt:
+            - DynamoDBPublisherLambdaFunction
+            - Arn
+
+    # Needed because we're not setting the SNS event in the function section.
+    DynamoDBPublisherLambdaPermission:
+      Type: 'AWS::Lambda::Permission'
+      Properties:
+        Action: "lambda:InvokeFunction"
+        FunctionName:
+          Ref: DynamoDBPublisherLambdaFunction
+        Principal: 'sns.amazonaws.com'
+        SourceArn:
+          Fn::ImportValue:
+            Fn::Join:
+              - '-'
+              - - Ref: AwsAdmStackName
+                - 'BillingRecordsSnsTopicArn'
+
+    BillingItemDynamoDBTable:
+      Type: "AWS::DynamoDB::Table"
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: "LineItemId"
+            AttributeType: "S"
+          - AttributeName: "TimeIntervalStart"
+            AttributeType: "S"
+        KeySchema:
+          - AttributeName: "LineItemId"
+            KeyType: "HASH"
+          - AttributeName: "TimeIntervalStart"
+            KeyType: "RANGE"
+        ProvisionedThroughput:
+          ReadCapacityUnits: "5"
+          WriteCapacityUnits: "5"
+
+
+  Outputs:
+    BillingItemDynamoDBTableTableName:
+      Description: "DynamoDB table name where billing items are written to."
+      Value:
+        Ref: BillingItemDynamoDBTable
+      Export:
+        Name: "${self:service}-${self:provider.stage}-S3BillingItemWriterBucketName"
+
+    BillingItemDynamoDBTableTableArn:
+      Description: "DynamoDB table name where billing items are written to."
+      Value:
+        Fn::GetAtt:
+          - BillingItemDynamoDBTable
+          - Arn
+      Export:
+        Name: "${self:service}-${self:provider.stage}-BillingItemDynamoDBTableTableArn"
+
