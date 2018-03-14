@@ -71,7 +71,7 @@ Outputs:
     Value:
       Ref: ApplicationCostMonitoringTable
     Export:
-      Name: ACM-DynamoDB-Publisher-prime-BillingItemDynamoDBTableName
+      Name: ACM-DynamoDB-Publisher-BillingItemDynamoDBTableName
   BillingItemDynamoDBTableArn:
     Description: DynamoDB table name where billing items are written to.
     Value:
@@ -79,7 +79,7 @@ Outputs:
         - ApplicationCostMonitoringTable
         - Arn
     Export:
-      Name: ACM-DynamoDB-Publisher-prime-BillingItemDynamoDBTableArn
+      Name: ACM-DynamoDB-Publisher-BillingItemDynamoDBTableArn
   BillingItemDynamoDBTableStreamArn:
     Description: DynamoDB table name where billing items are written to.
     Value:
@@ -87,7 +87,7 @@ Outputs:
         - ApplicationCostMonitoringTable
         - StreamArn
     Export:
-      Name: ACM-DynamoDB-Publisher-prime-BillingItemDynamoDBTableStreamArn
+      Name: ACM-DynamoDB-Publisher-BillingItemDynamoDBTableStreamArn
 Parameters:
   AwsAdmStackName:
     Type: String
