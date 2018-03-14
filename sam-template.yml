@@ -77,28 +77,28 @@ Resources:
           DDT_HASH_KEY: LineItemId
           DDT_RANGE_KEY: TimeIntervalStart
 Outputs:
-  BillingItemDynamoDBTableTableName:
+  BillingItemDynamoDBTableName:
     Description: DynamoDB table name where billing items are written to.
     Value:
       Ref: ApplicationCostMonitoringTable
     Export:
-      Name: ACM-DynamoDB-Publisher-prime-S3BillingItemWriterBucketName
-  BillingItemDynamoDBTableTableArn:
+      Name: ACM-DynamoDB-Publisher-prime-BillingItemDynamoDBTableName
+  BillingItemDynamoDBTableArn:
     Description: DynamoDB table name where billing items are written to.
     Value:
       'Fn::GetAtt':
         - ApplicationCostMonitoringTable
         - Arn
     Export:
-      Name: ACM-DynamoDB-Publisher-prime-BillingItemDynamoDBTableTableArn
-  BillingItemDynamoDBTableTableStreamArn:
+      Name: ACM-DynamoDB-Publisher-prime-BillingItemDynamoDBTableArn
+  BillingItemDynamoDBTableStreamArn:
     Description: DynamoDB table name where billing items are written to.
     Value:
       'Fn::GetAtt':
         - ApplicationCostMonitoringTable
         - StreamArn
     Export:
-      Name: ACM-DynamoDB-Publisher-prime-BillingItemDynamoDBTableTableStreamArn
+      Name: ACM-DynamoDB-Publisher-prime-BillingItemDynamoDBTableStreamArn
 Parameters:
   AwsAdmStackName:
     Type: String
