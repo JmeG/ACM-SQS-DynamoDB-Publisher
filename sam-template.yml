@@ -92,7 +92,7 @@ Parameters:
   AwsAdmStackName:
     Type: String
     Description: AWS Application Monitoring CloudFormation stack name
-    Default: ApplicationCostMonitoring-prime
+    Default: aws-serverless-repository-ApplicationCostMonitoring
   DynamoDBReadCapacityUnits:
     Type: String
     Description: DynamoDB Table read capacity units
