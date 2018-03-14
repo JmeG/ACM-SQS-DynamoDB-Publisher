@@ -16,6 +16,8 @@ custom:
   cf-parameters:
     aws_adm_stack_name: "${env:AWS_ADM_STACK_NAME, 'ApplicationCostMonitoring-${self:custom.stage}'}"
     stream_view_type: "${env:STREAM_VIEW_TYPE, 'NEW_AND_OLD_IMAGES'}"
+    dynamodb_rcu: "${env:DYNAMODB_RCU, '1'}"
+    dynamodb_wcu: "${env:DYNAMODB_WCU, '1'}"
 
 provider:
   name: aws
@@ -51,6 +53,14 @@ resources:
       Type: String
       Description: 'AWS Application Monitoring CloudFormation stack name'
       Default: '${self:custom.cf-parameters.aws_adm_stack_name}'
+    DynamoDBReadCapacityUnits:
+      Type: String
+      Description: "DynamoDB Table read capacity units"
+      Default: '${self:custom.cf-parameters.dynamodb_rcu}'
+    DynamoDBWriteCapacityUnits:
+      Type: String
+      Description: "DynamoDB Table write capacity units"
+      Default: '${self:custom.cf-parameters.dynamodb_wcu}'
     StreamViewType:
       Type: String
       Description: 'DynamoDB table stream type'
