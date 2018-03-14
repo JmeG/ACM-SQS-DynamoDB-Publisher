@@ -5,7 +5,7 @@
 
 Application Cost Monitoring provides granular AWS spend tracking. This will write items from [AWS Application Cost Monitoring](https://github.com/ServerlessOpsIO/ApplicationCostMonitoring/) to DynamoDB.
 
-**This requires [AWS Application Cost Monitoring](https://github.com/ServerlessOpsIO/ApplicationCostMonitoring/) to be deployed first.** This will subscribe to the SNS topic of that service and publish messages produced by it to S3.
+**This requires [AWS Application Cost Monitoring](https://github.com/ServerlessOpsIO/ApplicationCostMonitoring/) to be deployed first.** This will subscribe to the SNS topic of that service and publish messages produced by it to DynamoDB
 
 ![System Architecture](/diagram.png?raw=true "System Architecture")
 
