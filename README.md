@@ -26,7 +26,7 @@ $ serverless deploy -v
 ### AWS Serverless Application Repository
 See the README and instructions at:
 
-* 
+* https://serverlessrepo.aws.amazon.com/#/applications/arn:aws:serverlessrepo:us-east-1:641494176294:applications~ACM-DynamoDB-Publisher
 
 ## Usage
 This service provides AWS cost and usage data in a DynamoDB table.  Either query the data manually or, better, deploy a front end to search the data.
