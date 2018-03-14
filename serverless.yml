@@ -10,7 +10,6 @@ custom:
   stage: "${opt:stage, env:SLS_STAGE, 'dev'}"
   profile: "${opt:aws-profile, env:AWS_PROFILE, env:AWS_DEFAULT_PROFILE, 'default'}"
   log_level: "${env:LOG_LEVEL, 'INFO'}"
-  dynamodb_table_name: 'ApplicationCostMonitoring'
   dynamodb_hash_key: 'LineItemId'
   dynamodb_range_key: 'TimeIntervalStart'
 
@@ -28,7 +27,7 @@ provider:
         - "dynamodb:PutItem"
       Resource:
           - Fn::GetAtt:
-            - BillingItemDynamoDBTable
+            - ApplicationCostMonitoringTable
             - Arn
 
 functions:
@@ -41,7 +40,8 @@ functions:
     timeout: 300
     environment:
       LOG_LEVEL: ${self:custom.log_level}
-      DYNAMODB_TABLE: '${self:custom.dynamodb_table_name}'
+      DYNAMODB_TABLE:
+        Ref: ApplicationCostMonitoringTable
       DDT_HASH_KEY: '${self:custom.dynamodb_hash_key}'
       DDT_RANGE_KEY: '${self:custom.dynamodb_range_key}'
 
@@ -87,7 +87,7 @@ resources:
               - - Ref: AwsAdmStackName
                 - 'BillingRecordsSnsTopicArn'
 
-    BillingItemDynamoDBTable:
+    ApplicationCostMonitoringTable:
       Type: "AWS::DynamoDB::Table"
       Properties:
         AttributeDefinitions:
@@ -112,7 +112,7 @@ resources:
     BillingItemDynamoDBTableTableName:
       Description: "DynamoDB table name where billing items are written to."
       Value:
-        Ref: BillingItemDynamoDBTable
+        Ref: ApplicationCostMonitoringTable
       Export:
         Name: "${self:service}-${self:provider.stage}-S3BillingItemWriterBucketName"
 
@@ -120,7 +120,7 @@ resources:
       Description: "DynamoDB table name where billing items are written to."
       Value:
         Fn::GetAtt:
-          - BillingItemDynamoDBTable
+          - ApplicationCostMonitoringTable
           - Arn
       Export:
         Name: "${self:service}-${self:provider.stage}-BillingItemDynamoDBTableTableArn"
@@ -129,7 +129,7 @@ resources:
       Description: "DynamoDB table name where billing items are written to."
       Value:
         Fn::GetAtt:
-          - BillingItemDynamoDBTable
+          - ApplicationCostMonitoringTable
           - StreamArn
       Export:
         Name: "${self:service}-${self:provider.stage}-BillingItemDynamoDBTableTableStreamArn"
