@@ -31,7 +31,7 @@ provider:
 
 functions:
   DynamoDBPublisher:
-    handler: handlers/dynamodb-billing-item-writer.handler
+    handler: handlers/dynamodb-billing-item-publisher.handler
     description: "Write billing data to a DynamoDB table"
     runtime: python3.6
     memorySize: 128
