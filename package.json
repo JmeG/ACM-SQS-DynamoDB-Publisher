@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "dependencies": {},
   "devDependencies": {
+    "serverless-dynamodb-autoscaling": "^0.6.2",
     "serverless-iam-roles-per-function": "^0.1.5",
     "serverless-pseudo-parameters": "^1.4.2",
     "serverless-python-requirements": "^3.3.1",

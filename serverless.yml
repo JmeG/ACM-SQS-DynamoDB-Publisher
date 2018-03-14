@@ -5,19 +5,39 @@ plugins:
   - serverless-python-requirements
   - serverless-pseudo-parameters
   - serverless-sam
+  - serverless-dynamodb-autoscaling
 
 custom:
   stage: "${opt:stage, env:SLS_STAGE, 'dev'}"
   profile: "${opt:aws-profile, env:AWS_PROFILE, env:AWS_DEFAULT_PROFILE, 'default'}"
   log_level: "${env:LOG_LEVEL, 'INFO'}"
+
   dynamodb_hash_key: 'LineItemId'
   dynamodb_range_key: 'TimeIntervalStart'
+  capacities:
+    - table: ApplicationCostMonitoringTable
+      write:
+        minimum: '${self:custom.cf-parameters.dynamodb_wcu_min}'
+        maximum: '${self:custom.cf-parameters.dynamodb_wcu_max}'
+        usage: '${self:custom.cf-parameters.dynamodb_wcu_usage}'
+      read:
+        minimum: '${self:custom.cf-parameters.dynamodb_rcu_min}'
+        maximum: '${self:custom.cf-parameters.dynamodb_rcu_max}'
+        usage: '${self:custom.cf-parameters.dynamodb_rcu_usage}'
 
   cf-parameters:
     aws_adm_stack_name: "${env:AWS_ADM_STACK_NAME, 'ApplicationCostMonitoring-${self:custom.stage}'}"
     stream_view_type: "${env:STREAM_VIEW_TYPE, 'NEW_AND_OLD_IMAGES'}"
+    # Sets the inital size
     dynamodb_rcu: "${env:DYNAMODB_RCU, '1'}"
     dynamodb_wcu: "${env:DYNAMODB_WCU, '1'}"
+    # These are for autoscaling
+    dynamodb_rcu_min: "${env:DYNAMODB_RCU_MIN, '1'}"
+    dynamodb_wcu_min: "${env:DYNAMODB_WCU_MIN, '1'}"
+    dynamodb_rcu_max: "${env:DYNAMODB_RCU_MAX, '100'}"
+    dynamodb_wcu_max: "${env:DYNAMODB_WCU_MAX, '100'}"
+    dynamodb_rcu_usage: "${env:DYNAMODB_RCU_USAGE, '0.75'}"
+    dynamodb_wcu_usage: "${env:DYNAMODB_WCU_USAGE, '0.75'}"
 
 provider:
   name: aws
@@ -57,10 +77,26 @@ resources:
       Type: String
       Description: "DynamoDB Table read capacity units"
       Default: '${self:custom.cf-parameters.dynamodb_rcu}'
+    DynamoDBReadCapacityUnitsMin:
+      Type: String
+      Description: "DynamoDB Table read capacity units autoscaling min"
+      Default: '${self:custom.cf-parameters.dynamodb_rcu_min}'
+    DynamoDBReadCapacityUnitsMax:
+      Type: String
+      Description: "DynamoDB Table read capacity units autoscaling max"
+      Default: '${self:custom.cf-parameters.dynamodb_rcu_max}'
     DynamoDBWriteCapacityUnits:
       Type: String
       Description: "DynamoDB Table write capacity units"
       Default: '${self:custom.cf-parameters.dynamodb_wcu}'
+    DynamoDBWriteCapacityUnitsMin:
+      Type: String
+      Description: "DynamoDB Table write capacity units autoscaling min"
+      Default: '${self:custom.cf-parameters.dynamodb_wcu_min}'
+    DynamoDBWriteCapacityUnitsMax:
+      Type: String
+      Description: "DynamoDB Table write capacity units autoscaling max"
+      Default: '${self:custom.cf-parameters.dynamodb_wcu_max}'
     StreamViewType:
       Type: String
       Description: 'DynamoDB table stream type'
@@ -111,8 +147,10 @@ resources:
           - AttributeName: "TimeIntervalStart"
             KeyType: "RANGE"
         ProvisionedThroughput:
-          ReadCapacityUnits: "5"
-          WriteCapacityUnits: "5"
+          ReadCapacityUnits:
+            Ref: DynamoDBReadCapacityUnits
+          WriteCapacityUnits:
+            Ref: DynamoDBWriteCapacityUnits
         StreamSpecification:
           StreamViewType:
             Ref: StreamViewType
