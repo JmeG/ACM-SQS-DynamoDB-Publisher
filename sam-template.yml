@@ -16,19 +16,6 @@ Resources:
         'Fn::GetAtt':
           - DynamoDBPublisherLambdaFunction
           - Arn
-  DynamoDBPublisherLambdaPermission:
-    Type: 'AWS::Lambda::Permission'
-    Properties:
-      Action: 'lambda:InvokeFunction'
-      FunctionName:
-        Ref: DynamoDBPublisherLambdaFunction
-      Principal: sns.amazonaws.com
-      SourceArn:
-        'Fn::ImportValue':
-          'Fn::Join':
-            - '-'
-            - - Ref: AwsAdmStackName
-              - BillingRecordsSnsTopicArn
   ApplicationCostMonitoringTable:
     Type: 'AWS::DynamoDB::Table'
     Properties:
@@ -54,6 +41,7 @@ Resources:
     Type: 'AWS::Serverless::Function'
     Properties:
       Handler: handlers/dynamodb-billing-item-publisher.handler
+      Runtime: python3.6
       CodeUri: >-
         s3://%%S3_BUCKET%%/%%S3_DEPLOY_ARTIFACT%%
       Description: Write billing data to a DynamoDB table
@@ -76,6 +64,13 @@ Resources:
             Ref: ApplicationCostMonitoringTable
           DDT_HASH_KEY: LineItemId
           DDT_RANGE_KEY: TimeIntervalStart
+      Events:
+        ApplicationCostMonitoringMessage:
+          Type: SNS
+          Properties:
+            Topic:
+              Fn::ImportValue:
+                Fn::Sub: ${AwsAdmStackName}-BillingRecordsSnsTopicArn
 Outputs:
   BillingItemDynamoDBTableName:
     Description: DynamoDB table name where billing items are written to.
