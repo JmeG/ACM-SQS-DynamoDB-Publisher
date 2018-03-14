@@ -77,26 +77,26 @@ resources:
       Type: String
       Description: "DynamoDB Table read capacity units"
       Default: '${self:custom.cf-parameters.dynamodb_rcu}'
-    DynamoDBReadCapacityUnitsMin:
-      Type: String
-      Description: "DynamoDB Table read capacity units autoscaling min"
-      Default: '${self:custom.cf-parameters.dynamodb_rcu_min}'
-    DynamoDBReadCapacityUnitsMax:
-      Type: String
-      Description: "DynamoDB Table read capacity units autoscaling max"
-      Default: '${self:custom.cf-parameters.dynamodb_rcu_max}'
+#    DynamoDBReadCapacityUnitsMin:
+#      Type: String
+#      Description: "DynamoDB Table read capacity units autoscaling min"
+#      Default: '${self:custom.cf-parameters.dynamodb_rcu_min}'
+#    DynamoDBReadCapacityUnitsMax:
+#      Type: String
+#      Description: "DynamoDB Table read capacity units autoscaling max"
+#      Default: '${self:custom.cf-parameters.dynamodb_rcu_max}'
     DynamoDBWriteCapacityUnits:
       Type: String
       Description: "DynamoDB Table write capacity units"
       Default: '${self:custom.cf-parameters.dynamodb_wcu}'
-    DynamoDBWriteCapacityUnitsMin:
-      Type: String
-      Description: "DynamoDB Table write capacity units autoscaling min"
-      Default: '${self:custom.cf-parameters.dynamodb_wcu_min}'
-    DynamoDBWriteCapacityUnitsMax:
-      Type: String
-      Description: "DynamoDB Table write capacity units autoscaling max"
-      Default: '${self:custom.cf-parameters.dynamodb_wcu_max}'
+#    DynamoDBWriteCapacityUnitsMin:
+#      Type: String
+#      Description: "DynamoDB Table write capacity units autoscaling min"
+#      Default: '${self:custom.cf-parameters.dynamodb_wcu_min}'
+#    DynamoDBWriteCapacityUnitsMax:
+#      Type: String
+#      Description: "DynamoDB Table write capacity units autoscaling max"
+#      Default: '${self:custom.cf-parameters.dynamodb_wcu_max}'
     StreamViewType:
       Type: String
       Description: 'DynamoDB table stream type'
