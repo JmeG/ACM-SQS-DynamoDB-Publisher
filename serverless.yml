@@ -11,6 +11,8 @@ custom:
   profile: "${opt:aws-profile, env:AWS_PROFILE, env:AWS_DEFAULT_PROFILE, 'default'}"
   log_level: "${env:LOG_LEVEL, 'INFO'}"
   dynamodb_table_name: 'ApplicationCostMonitoring'
+  dynamodb_hash_key: 'LineItemId'
+  dynamodb_range_key: 'TimeIntervalStart'
 
   cf-parameters:
     aws_adm_stack_name: "${env:AWS_ADM_STACK_NAME, 'ApplicationCostMonitoring-${self:custom.stage}'}"
@@ -40,6 +42,8 @@ functions:
     environment:
       LOG_LEVEL: ${self:custom.log_level}
       DYNAMODB_TABLE: '${self:custom.dynamodb_table_name}'
+      DDT_HASH_KEY: '${self:custom.dynamodb_hash_key}'
+      DDT_RANGE_KEY: '${self:custom.dynamodb_range_key}'
 
 resources:
   Parameters:
