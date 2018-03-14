@@ -14,7 +14,7 @@ Resources:
       Protocol: lambda
       Endpoint:
         'Fn::GetAtt':
-          - DynamoDBPublisherLambdaFunction
+          - DynamoDBPublisher
           - Arn
   ApplicationCostMonitoringTable:
     Type: 'AWS::DynamoDB::Table'
@@ -48,15 +48,9 @@ Resources:
       MemorySize: 128
       Timeout: 300
       Policies:
-        - Version: '2012-10-17'
-          Statement:
-            - Effect: Allow
-              Action:
-                - 'dynamodb:PutItem'
-              Resource:
-                - 'Fn::GetAtt':
-                    - ApplicationCostMonitoringTable
-                    - Arn
+        - DynamoDBCrudPolicy:
+            TableName:
+              Ref: ApplicationCostMonitoringTable
       Environment:
         Variables:
           LOG_LEVEL: INFO
