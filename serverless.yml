@@ -1,4 +1,4 @@
-service: ACM-DynamoDB-Publisher
+service: ACM-SQS-DynamoDB-Publisher
 
 plugins:
   - serverless-iam-roles-per-function
@@ -11,6 +11,9 @@ custom:
   stage: "${opt:stage, env:SLS_STAGE, 'dev'}"
   profile: "${opt:aws-profile, env:AWS_PROFILE, env:AWS_DEFAULT_PROFILE, 'default'}"
   log_level: "${env:LOG_LEVEL, 'INFO'}"
+
+  # Need to keep function timeout and message visibility timeout in sync.
+  publisher_function_timeout: 300
 
   dynamodb_hash_key: 'LineItemId'
   dynamodb_range_key: 'TimeIntervalStart'
@@ -38,6 +41,8 @@ custom:
     dynamodb_wcu_max: "${env:DYNAMODB_WCU_MAX, '100'}"
     dynamodb_rcu_usage: "${env:DYNAMODB_RCU_USAGE, '0.75'}"
     dynamodb_wcu_usage: "${env:DYNAMODB_WCU_USAGE, '0.75'}"
+    message_publish_delay: "${env:MSG_PUBLISH_DELAY, '0'}"
+
 
 provider:
   name: aws
@@ -48,9 +53,18 @@ provider:
       Action:
         - "dynamodb:PutItem"
       Resource:
-          - Fn::GetAtt:
-            - ApplicationCostMonitoringTable
-            - Arn
+        - Fn::GetAtt:
+          - ApplicationCostMonitoringTable
+          - Arn
+    - Effect: "Allow"
+      Action:
+        - "sqs:DeleteMessage"
+        - "sqs:ReceiveMessage"
+      Resource:
+        - Fn::GetAtt:
+          - LineItemSqsQueue
+          - Arn
+
 
 functions:
   DynamoDBPublisher:
@@ -59,13 +73,17 @@ functions:
     runtime: python3.6
     memorySize: 128
     # High timeout to give room for retries
-    timeout: 300
+    timeout: '${self:custom.publisher_function_timeout}'
     environment:
       LOG_LEVEL: ${self:custom.log_level}
       DYNAMODB_TABLE:
         Ref: ApplicationCostMonitoringTable
       DDT_HASH_KEY: '${self:custom.dynamodb_hash_key}'
       DDT_RANGE_KEY: '${self:custom.dynamodb_range_key}'
+      SQS_QUEUE_URL:
+        Ref: LineItemSqsQueue
+      MSG_PUBLISH_DELAY: '${self:custom.cf-parameters.message_publish_delay}'
+
 
 resources:
   Parameters:
@@ -97,13 +115,22 @@ resources:
 #      Type: String
 #      Description: "DynamoDB Table write capacity units autoscaling max"
 #      Default: '${self:custom.cf-parameters.dynamodb_wcu_max}'
+    MsgPublishDelay:
+      Type: String
+      Description: 'DynamoDB table stream type'
+      Default: '${self:custom.cf-parameters.message_publish_delay}'
     StreamViewType:
       Type: String
       Description: 'DynamoDB table stream type'
       Default: '${self:custom.cf-parameters.stream_view_type}'
 
   Resources:
-    SnsSubscriptionDynamoDBPublisher:
+    LineItemSqsQueue:
+      Type: "AWS::SQS::Queue"
+      Properties:
+        VisibilityTimeout: '${self:custom.publisher_function_timeout}'
+
+    LineItemSqsQueueSnsSubscription:
       Type: 'AWS::SNS::Subscription'
       Properties:
         TopicArn:
@@ -112,10 +139,10 @@ resources:
               - '-'
               - - Ref: AwsAdmStackName
                 - 'BillingRecordsSnsTopicArn'
-        Protocol: lambda
+        Protocol: sqs
         Endpoint:
           Fn::GetAtt:
-            - DynamoDBPublisherLambdaFunction
+            - LineItemSqsQueue
             - Arn
 
     # Needed because we're not setting the SNS event in the function section.
