@@ -122,4 +122,4 @@ Parameters:
     Type: String
     Description: DynamoDB table stream type
     Default: '0'
-    
+
