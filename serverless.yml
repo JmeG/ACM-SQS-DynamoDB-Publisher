@@ -82,7 +82,8 @@ functions:
       DDT_RANGE_KEY: '${self:custom.dynamodb_range_key}'
       SQS_QUEUE_URL:
         Ref: LineItemSqsQueue
-      MSG_PUBLISH_DELAY: '${self:custom.cf-parameters.message_publish_delay}'
+      MSG_PUBLISH_DELAY:
+        Ref: MsgPublishDelay
 
 
 resources:
@@ -117,7 +118,7 @@ resources:
 #      Default: '${self:custom.cf-parameters.dynamodb_wcu_max}'
     MsgPublishDelay:
       Type: String
-      Description: 'DynamoDB table stream type'
+      Description: 'Delay between publishing messages to DynamoDB'
       Default: '${self:custom.cf-parameters.message_publish_delay}'
     StreamViewType:
       Type: String
