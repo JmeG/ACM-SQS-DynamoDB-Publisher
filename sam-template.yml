@@ -11,11 +11,15 @@ Resources:
             - '-'
             - - Ref: AwsAdmStackName
               - BillingRecordsSnsTopicArn
-      Protocol: lambda
+      Protocol: sqs
       Endpoint:
         'Fn::GetAtt':
-          - DynamoDBPublisher
+          - LineItemSqsQueue
           - Arn
+  LineItemSqsQueue:
+    Type: "AWS::SQS::Queue"
+    Properties:
+      VisibilityTimeout: 300
   ApplicationCostMonitoringTable:
     Type: 'AWS::DynamoDB::Table'
     Properties:
@@ -51,6 +55,11 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName:
               Ref: ApplicationCostMonitoringTable
+        - SQSPollerPolicy:
+            QueueName:
+              Fn::GetAtt:
+                - LineItemSqsQueue
+                - QueueName
       Environment:
         Variables:
           LOG_LEVEL: INFO
@@ -58,6 +67,10 @@ Resources:
             Ref: ApplicationCostMonitoringTable
           DDT_HASH_KEY: LineItemId
           DDT_RANGE_KEY: TimeIntervalStart
+          SQS_QUEUE_URL:
+            Ref: LineItemSqsQueue
+          MSG_PUBLISH_DELAY:
+            Ref: MsgPublishDelay
       Events:
         ApplicationCostMonitoringMessage:
           Type: SNS
@@ -71,7 +84,7 @@ Outputs:
     Value:
       Ref: ApplicationCostMonitoringTable
     Export:
-      Name: ACM-DynamoDB-Publisher-BillingItemDynamoDBTableName
+      Name: ACM-SQS-DynamoDB-Publisher-BillingItemDynamoDBTableName
   BillingItemDynamoDBTableArn:
     Description: DynamoDB table name where billing items are written to.
     Value:
@@ -79,7 +92,7 @@ Outputs:
         - ApplicationCostMonitoringTable
         - Arn
     Export:
-      Name: ACM-DynamoDB-Publisher-BillingItemDynamoDBTableArn
+      Name: ACM-SQS-DynamoDB-Publisher-BillingItemDynamoDBTableArn
   BillingItemDynamoDBTableStreamArn:
     Description: DynamoDB table name where billing items are written to.
     Value:
@@ -87,7 +100,7 @@ Outputs:
         - ApplicationCostMonitoringTable
         - StreamArn
     Export:
-      Name: ACM-DynamoDB-Publisher-BillingItemDynamoDBTableStreamArn
+      Name: ACM-SQS-DynamoDB-Publisher-BillingItemDynamoDBTableStreamArn
 Parameters:
   AwsAdmStackName:
     Type: String
@@ -103,5 +116,10 @@ Parameters:
     Default: '5'
   StreamViewType:
     Type: String
-    Description: DynamoDB table stream type
+    Description: Delay between publishing messages to DynamoDB
     Default: NEW_AND_OLD_IMAGES
+  MsgPublishDelay:
+    Type: String
+    Description: DynamoDB table stream type
+    Default: '0'
+    
